@@ -1,0 +1,4 @@
+tensorflow==1.13.1
+matplotlib==3.0.3
+requests==2.21.0
+scipy==1.4.1
