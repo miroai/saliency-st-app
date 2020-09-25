@@ -119,7 +119,7 @@ def test_model(dataset, paths, device):
                 file.write(output_file)
 
 
-def main(tmp_image):
+def main(tmp_path):
     """The main function reads the command line arguments, invokes the
        creation of appropriate path variables, and starts the training
        or testing procedure for a model.
@@ -127,7 +127,7 @@ def main(tmp_image):
 
     current_path = os.path.dirname(os.path.realpath(__file__))
 
-    args = argparse.Namespace(path='tmp/{}'.format(tmp_image))
+    args = argparse.Namespace(path='{}'.format(tmp_path))
 
     paths = define_paths(current_path, args)
 
