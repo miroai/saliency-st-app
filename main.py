@@ -42,9 +42,9 @@ def define_paths(current_path, args):
     best_path = ckpts_path + "best/"
     latest_path = ckpts_path + "latest/"
 
-    if args.phase == "train":
-        if args.data not in data_path:
-            data_path += args.data + "/"
+    # if args.phase == "train":
+    #     if args.data not in data_path:
+    #         data_path += args.data + "/"
 
     paths = {
         "data": data_path,
@@ -206,44 +206,17 @@ def test_model(dataset, paths, device):
                 file.write(output_file)
 
 
-def main():
+def main(tmp_image):
     """The main function reads the command line arguments, invokes the
        creation of appropriate path variables, and starts the training
        or testing procedure for a model.
     """
 
     current_path = os.path.dirname(os.path.realpath(__file__))
-    default_data_path = current_path + "/data"
 
-    phases_list = ["train", "test"]
-
-    datasets_list = ["salicon", "mit1003", "cat2000",
-                     "dutomron", "pascals", "osie", "fiwi"]
-
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument("phase", metavar="PHASE", choices=phases_list,
-                        help="sets the network phase (allowed: train or test)")
-
-    parser.add_argument("-d", "--data", metavar="DATA",
-                        choices=datasets_list, default=datasets_list[0],
-                        help="define which dataset will be used for training \
-                              or which trained model is used for testing")
-
-    parser.add_argument("-p", "--path", default=default_data_path,
-                        help="specify the path where training data will be \
-                              downloaded to or test data is stored")
-
-    args = parser.parse_args()
+    args = argparse.Namespace(path='tmp/{}'.format(tmp_image))
 
     paths = define_paths(current_path, args)
 
-    if args.phase == "train":
-        train_model(args.data, paths, config.PARAMS["device"])
-    elif args.phase == "test":
-        test_model(args.data, paths, config.PARAMS["device"])
+    test_model('mit1003', paths, config.PARAMS["device"])
 
-
-if __name__ == "__main__":
-    main()
