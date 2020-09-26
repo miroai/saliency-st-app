@@ -43,4 +43,4 @@ def predict(img):
 thumbnail = "https://ibb.co/y8nh3Mj"
 gr.Interface(predict, "image", "image", title="Twitter Image Cropper",
              description="A model similar to Twitter's Image Cropper",
-             thumbnail=thumbnail).launch(debug=True)
+             thumbnail=thumbnail).launch()
