@@ -38,9 +38,9 @@ def predict(img):
   os.remove(tmp_result)
   left, right, bottom, top = best_window(map)
   out = img[bottom:top, left:right, :]
-  return out
+  return map, out
 
 thumbnail = "https://ibb.co/y8nh3Mj"
-gr.Interface(predict, "image", "image", title="Twitter Image Cropper",
+gr.Interface(predict, gr.inputs.Image(label="Your Image"), [gr.outputs.Image(label="Saliency Map"), gr.outputs.Image(label="Cropped Image"], title="Twitter Image Cropper",
              description="A model similar to Twitter's Image Cropper",
              thumbnail=thumbnail).launch()
