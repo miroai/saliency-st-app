@@ -27,20 +27,30 @@ def best_window(saliency, aspect_ratio=(16,9)):
     max_col = np.argmax(convolved_saliency)
     return max_col, max_col + width, 0, orig_height
 
+def overlay_saliency(img, map):
+  background = img.convert("RGBA")
+  overlay = map.convert("RGBA")
+  new_img = Image.blend(background, overlay, 0.75)
+  return new_img
+
 def predict(img):
-  tmp_name = str(random.getrandbits(32))
+  tmp_name = str(random.getrandbits(64))
   tmp_file = 'tmp/{}.jpg'.format(tmp_name)
   imageio.imwrite(tmp_file, img)
   main(tmp_file)
   tmp_result = 'results/images/{}.jpeg'.format(tmp_name)
-  map = np.array(Image.open(tmp_result))
+  map_pil = Image.open(tmp_result)
+  img_pil = Image.open(tmp_file)
   os.remove(tmp_file)
   os.remove(tmp_result)
+  map = np.array(map_pil)
   left, right, bottom, top = best_window(map)
   out = img[bottom:top, left:right, :]
-  return map, out
+  overlay = overlay_saliency(img_pil, map_pil)
+  return overlay, out
+
 
 thumbnail = "https://ibb.co/y8nh3Mj"
-gr.Interface(predict, gr.inputs.Image(label="Your Image"), [gr.outputs.Image(label="Saliency Map"), gr.outputs.Image(label="Cropped Image"], title="Twitter Image Cropper",
-             description="A model similar to Twitter's Image Cropper",
-             thumbnail=thumbnail).launch()
+gr.Interface(predict, gr.inputs.Image(label="Your Image"),
+             [gr.outputs.Image(label="Saliency Map"), gr.outputs.Image(
+               label="Cropped Image")], thumbnail=thumbnail).launch()
