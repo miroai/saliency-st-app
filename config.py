@@ -10,7 +10,7 @@ PARAMS = {
     "n_epochs": 10,
     "batch_size": 1,
     "learning_rate": 1e-5,
-    "device": "cpu"
+    "device": "gpu"
 }
 
 """The predefined input image sizes for each of the 3 datasets.
