@@ -12,17 +12,17 @@ def best_window(saliency, aspect_ratio=(16,9)):
   saliency is np.array with shape (height, width)
   aspect_ratio is tuple of (width, height)
   """
-  orig_width, orig_height = saliency.shape
+  orig_height, orig_width = saliency.shape
   move_vertically = orig_height >= orig_width / aspect_ratio[0] * aspect_ratio[1]
   if move_vertically:
     saliency_per_row = np.sum(saliency, axis=1)
-    height = round(saliency.shape[1] / aspect_ratio[0] * aspect_ratio[1])
+    height = round(orig_width / aspect_ratio[0] * aspect_ratio[1])
     convolved_saliency = np.convolve(saliency_per_row, np.ones(height), "valid")
     max_row = np.argmax(convolved_saliency)
     return 0, orig_width, max_row, max_row + height
   else:
     saliency_per_col = np.sum(saliency, axis=0)
-    width = round(saliency.shape[0] / aspect_ratio[1] * aspect_ratio[0])
+    width = round(orig_height / aspect_ratio[1] * aspect_ratio[0])
     convolved_saliency = np.convolve(saliency_per_col, np.ones(width), "valid")
     max_col = np.argmax(convolved_saliency)
     return max_col, max_col + width, 0, orig_height
