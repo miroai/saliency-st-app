@@ -1,3 +1,11 @@
+# Saliency Based Image Cropping
+
+This repo was forked by the Gradio team to create the interface here: [gradio.app/demo/saliency](gradio.app/demo/saliency)
+
+
+
+
+
 # Contextual Encoder-Decoder Network <br/> for Visual Saliency Prediction
 
 ![](https://img.shields.io/badge/python-v3.6.8-orange.svg?style=flat-square)
