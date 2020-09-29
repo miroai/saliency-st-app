@@ -1,6 +1,6 @@
 # Saliency Based Image Cropping
 
-This repo was forked by the Gradio team to create the interface here: [gradio.app/demo/saliency](gradio.app/demo/saliency)
+This repo was forked by the Gradio team to create the interface here:
 
 
 
