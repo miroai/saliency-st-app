@@ -118,6 +118,44 @@ def test_model(dataset, paths, device):
             with open(paths["images"] + filename, "wb") as file:
                 file.write(output_file)
 
+def better_test_model(sess, tmp_path):
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    args = argparse.Namespace(path='{}'.format(tmp_path))
+    paths = define_paths(current_path, args)
+    
+    dataset = 'mit1003'
+    device = config.PARAMS["device"]
+
+    iterator = data.get_dataset_iterator("test", dataset, paths["data"])
+
+    next_element, init_op = iterator
+
+    input_images, original_shape, file_path = next_element
+
+    jpeg = data.postprocess_saliency_map(predicted_maps[0],
+                                         original_shape[0])
+
+    print(">> Start testing with %s %s model..." % (dataset.upper(), device))
+
+    sess.run(init_op)
+
+    while True:
+        try:
+            output_file, path = sess.run([jpeg, file_path])
+        except tf.errors.OutOfRangeError:
+            break
+
+        path = path[0][0].decode("utf-8")
+
+        filename = os.path.basename(path)
+        filename = os.path.splitext(filename)[0]
+        filename += ".jpeg"
+
+        os.makedirs(paths["images"], exist_ok=True)
+
+        with open(paths["images"] + filename, "wb") as file:
+            file.write(output_file)
+
 
 def main(tmp_path):
     """The main function reads the command line arguments, invokes the
