@@ -23,11 +23,14 @@ def define_paths(current_path, args):
     Returns:
         dict: A dictionary with all path elements.
     """
-
-    if os.path.isfile(args.path):
-        data_path = args.path
+    
+    if args is None:
+        data_path = None
     else:
-        data_path = os.path.join(args.path, "")
+        if os.path.isfile(args.path):
+            data_path = args.path
+        else:
+            data_path = os.path.join(args.path, "")
 
     results_path = current_path + "/results/"
     weights_path = current_path + "/weights/"
@@ -54,7 +57,71 @@ def define_paths(current_path, args):
 
     return paths
 
+def get_tf_objects(paths):
+    dataset = 'mit1003'
+    device = config.PARAMS["device"]
+    model_name = "model_%s_%s.pb" % (dataset, device)
+    
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    paths = define_paths(current_path, None)
+    
 
+    if os.path.isfile(paths["best"] + model_name):
+        with tf.gfile.Open(paths["best"] + model_name, "rb") as file:
+            graph_def.ParseFromString(file.read())
+    else:
+        if not os.path.isfile(paths["weights"] + model_name):
+            download.download_pretrained_weights(paths["weights"],
+                                                 model_name[:-3])
+
+        with tf.gfile.Open(paths["weights"] + model_name, "rb") as file:
+            graph_def.ParseFromString(file.read())
+
+    [predicted_maps] = tf.import_graph_def(graph_def,
+                                           input_map={"input": input_images},
+                                           return_elements=["output:0"])
+    
+    return 
+    
+
+def better_test_model(dataset, paths, device):
+    """The main function for executing network testing. It loads the specified
+       dataset iterator and optimized saliency model. By default, when no model
+       checkpoint is found locally, the pretrained weights will be downloaded.
+       Testing only works for models trained on the same device as specified in
+       the config file.
+
+    Args:
+        dataset (str): Denotes the dataset that was used during training.
+        paths (dict, str): A dictionary with all path elements.
+        device (str): Represents either "cpu" or "gpu".
+    """
+    jpeg = data.postprocess_saliency_map(predicted_maps[0],
+                                         original_shape[0])
+
+    print(">> Start testing with %s %s model..." % (dataset.upper(), device))
+
+    with tf.Session() as sess:
+        sess.run(init_op)
+
+        while True:
+            try:
+                output_file, path = sess.run([jpeg, file_path])
+            except tf.errors.OutOfRangeError:
+                break
+
+            path = path[0][0].decode("utf-8")
+
+            filename = os.path.basename(path)
+            filename = os.path.splitext(filename)[0]
+            filename += ".jpeg"
+
+            os.makedirs(paths["images"], exist_ok=True)
+
+            with open(paths["images"] + filename, "wb") as file:
+                file.write(output_file)
+
+                
 def test_model(dataset, paths, device):
     """The main function for executing network testing. It loads the specified
        dataset iterator and optimized saliency model. By default, when no model
@@ -98,6 +165,8 @@ def test_model(dataset, paths, device):
 
     print(">> Start testing with %s %s model..." % (dataset.upper(), device))
 
+    tf.reset_default_graph()
+    
     with tf.Session() as sess:
         sess.run(init_op)
 
@@ -117,44 +186,6 @@ def test_model(dataset, paths, device):
 
             with open(paths["images"] + filename, "wb") as file:
                 file.write(output_file)
-
-def better_test_model(sess, tmp_path):
-    current_path = os.path.dirname(os.path.realpath(__file__))
-    args = argparse.Namespace(path='{}'.format(tmp_path))
-    paths = define_paths(current_path, args)
-    
-    dataset = 'mit1003'
-    device = config.PARAMS["device"]
-
-    iterator = data.get_dataset_iterator("test", dataset, paths["data"])
-
-    next_element, init_op = iterator
-
-    input_images, original_shape, file_path = next_element
-
-    jpeg = data.postprocess_saliency_map(predicted_maps[0],
-                                         original_shape[0])
-
-    print(">> Start testing with %s %s model..." % (dataset.upper(), device))
-
-    sess.run(init_op)
-
-    while True:
-        try:
-            output_file, path = sess.run([jpeg, file_path])
-        except tf.errors.OutOfRangeError:
-            break
-
-        path = path[0][0].decode("utf-8")
-
-        filename = os.path.basename(path)
-        filename = os.path.splitext(filename)[0]
-        filename += ".jpeg"
-
-        os.makedirs(paths["images"], exist_ok=True)
-
-        with open(paths["images"] + filename, "wb") as file:
-            file.write(output_file)
 
 
 def main(tmp_path):
