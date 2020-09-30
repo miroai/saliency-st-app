@@ -165,7 +165,7 @@ def test_model(dataset, paths, device):
 
     print(">> Start testing with %s %s model..." % (dataset.upper(), device))
 
-    tf.reset_default_graph()
+#     tf.reset_default_graph()
     
     with tf.Session() as sess:
         sess.run(init_op)
