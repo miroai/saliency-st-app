@@ -55,6 +55,7 @@ def predict(img, show_saliency):
      return bounded
   return out
 
+main('tmp/example.png')
 
 thumbnail = "https://ibb.co/y8nh3Mj"
 gr.Interface(predict, [gr.inputs.Image(label="Your Image"),
