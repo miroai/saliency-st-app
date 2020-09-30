@@ -134,7 +134,8 @@ def test_model(dataset, paths, device):
         paths (dict, str): A dictionary with all path elements.
         device (str): Represents either "cpu" or "gpu".
     """
-
+    
+    tf.reset_default_graph()
     iterator = data.get_dataset_iterator("test", dataset, paths["data"])
 
     next_element, init_op = iterator
