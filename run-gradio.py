@@ -57,7 +57,11 @@ def predict(img, show_saliency):
 
 main('tmp/example.png')
 
-thumbnail = "https://ibb.co/y8nh3Mj"
+examples=[["images/1.jpg", True],
+          ["images/2.jpg", True]]
+
+thumbnail = "https://ibb.co/hXdbDyD"
 gr.Interface(predict, [gr.inputs.Image(label="Your Image"),
                        gr.inputs.Checkbox(label="Show Saliency Map")],
-             gr.outputs.Image(label="Cropped Image"), thumbnail=thumbnail).launch()
+             gr.outputs.Image(label="Cropped Image"), allow_flagging=False, thumbnail=thumbnail, examples=examples).launch()
+
