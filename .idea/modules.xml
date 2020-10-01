@@ -2,6 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../gradio/.idea/gradio.iml" filepath="$PROJECT_DIR$/../gradio/.idea/gradio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../webpage/gradio_static/.idea/gradio_static.iml" filepath="$PROJECT_DIR$/../webpage/gradio_static/.idea/gradio_static.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/saliency.iml" filepath="$PROJECT_DIR$/.idea/saliency.iml" />
     </modules>
   </component>
