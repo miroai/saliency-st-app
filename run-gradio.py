@@ -6,7 +6,6 @@ from PIL import Image, ImageDraw
 import gradio as gr
 import numpy as np
 import tensorflow as tf
-import cv2
 
 
 def best_window(saliency, aspect_ratio=(16,9)):
@@ -38,38 +37,43 @@ def overlay_saliency(img, map, left, right, bottom, top):
   draw.rectangle([left, bottom, right, top], outline ="orange", width=5)
   return overlaid
 
-def test_model(original_img, show_saliency): 
-    original_im = Image.fromarray(original_img).convert('RGB')
-    w, h = original_im.size
+def test_model(original_arr, show_saliency): 
+    original_img = Image.fromarray(original_arr).convert('RGB')
+    w, h = original_img.size
     h_ = int(400 / w * h)
-    im = original_im.resize((400, h_))
-    img = np.asarray(im)
+    resized_img = original_img.resize((400, h_))
+    resized_arr = np.asarray(resized_img)
 
-    img = img[np.newaxis, ...]
-    saliency = sess.run(predicted_maps, feed_dict={input_plhd: img})
-    saliency = saliency.squeeze()
+    resized_arr = resized_arr[np.newaxis, ...]
+    saliency_arr = sess.run(predicted_maps, feed_dict={input_plhd: resized_arr})
+    saliency_arr = saliency_arr.squeeze()
 
-    saliency_img = Image.fromarray(np.uint8(saliency * 255) , 'L')
-    saliency_img = saliency_img.resize((w, h))
-    saliency_resized = np.asarray(saliency_img)
+    saliency_img = Image.fromarray(np.uint8(saliency_arr * 255) , 'L')
+    saliency_resized_img = saliency_img.resize((w, h))
+    saliency_resized_arr = np.asarray(saliency_resized_img)
 
-    left, right, bottom, top = best_window(saliency_resized)
-    out = original_img[bottom:top, left:right, :]
+    left, right, bottom, top = best_window(saliency_resized_arr)
+    output = original_arr[bottom:top, left:right, :]
     
     if show_saliency:
-       bounded = overlay_saliency(original_im, saliency_img, left, right, bottom, top)
+       bounded = overlay_saliency(original_img, saliency_resized_img, 
+        left, right, bottom, top)
        return bounded
 
-    return out
+    return output
 
+
+### Model loading code
 graph_def = tf.GraphDef()
 model_name = "weights/model_mit1003_cpu.pb"
+
 with tf.gfile.Open(model_name, "rb") as file:
     graph_def.ParseFromString(file.read())
     input_plhd = tf.placeholder(tf.float32, (None, None, None, 3))
     [predicted_maps] = tf.import_graph_def(graph_def,
                                            input_map={"input": input_plhd},
                                            return_elements=["output:0"])
+
 sess = tf.Session()
 
 
