@@ -5,6 +5,8 @@ import imageio
 from PIL import Image, ImageDraw
 import gradio as gr
 import numpy as np
+import tensorflow as tf
+import cv2
 
 
 def best_window(saliency, aspect_ratio=(16,9)):
@@ -36,24 +38,29 @@ def overlay_saliency(img, map, left, right, bottom, top):
   draw.rectangle([left, bottom, right, top], outline ="orange", width=5)
   return overlaid
 
+def test_model(original_img, show_saliency): 
+    original_im = Image.fromarray(original_img).convert('RGB')
+    w, h = original_im.size
+    h_ = int(400 / w * h)
+    im = original_im.resize((400, h_))
+    img = np.asarray(im)
 
-def predict(img, show_saliency):
-  tmp_name = str(random.getrandbits(64))
-  tmp_file = 'tmp/{}.jpg'.format(tmp_name)
-  imageio.imwrite(tmp_file, img)
-  main(tmp_file)
-  tmp_result = 'results/images/{}.jpeg'.format(tmp_name)
-  map_pil = Image.open(tmp_result)
-  img_pil = Image.open(tmp_file)
-  # os.remove(tmp_file)
-  # os.remove(tmp_result)
-  map = np.array(map_pil)
-  left, right, bottom, top = best_window(map)
-  out = img[bottom:top, left:right, :]
-  if show_saliency:
-     bounded = overlay_saliency(img_pil, map_pil, left, right, bottom, top)
-     return bounded
-  return out
+    img = img[np.newaxis, ...]
+    saliency = sess.run(predicted_maps, feed_dict={input_plhd: img})
+    saliency = saliency.squeeze()
+
+    saliency_img = Image.fromarray(np.uint8(saliency * 255) , 'L')
+    saliency_img = saliency_img.resize((w, h))
+    saliency_resized = np.asarray(saliency_img)
+
+    left, right, bottom, top = best_window(saliency_resized)
+    out = original_img[bottom:top, left:right, :]
+    
+    if show_saliency:
+       bounded = overlay_saliency(original_im, saliency_img, left, right, bottom, top)
+       return bounded
+
+    return out
 
 graph_def = tf.GraphDef()
 model_name = "weights/model_mit1003_cpu.pb"
@@ -63,26 +70,19 @@ with tf.gfile.Open(model_name, "rb") as file:
     [predicted_maps] = tf.import_graph_def(graph_def,
                                            input_map={"input": input_plhd},
                                            return_elements=["output:0"])
+sess = tf.Session()
 
-def test_model():
-    img = np.random.random((1, 600, 800, 3))
-    
-    with tf.Session() as sess:
-        saliency = sess.run(predicted_maps,
-                            feed_dict={input_plhd: img})
-        saliency = cv2.cvtColor(saliency.squeeze(),
-                                cv2.COLOR_GRAY2BGR)
-        saliency = np.uint8(saliency * 255)
-        saliency = cv2.resize(saliency, (400, 300))
-    return saliency
-
-sal = test_model()
 
 examples=[["images/1.jpg", True],
           ["images/2.jpg", True]]
 
 thumbnail = "https://ibb.co/hXdbDyD"
-gr.Interface(predict, [gr.inputs.Image(label="Your Image"),
-                       gr.inputs.Checkbox(label="Show Saliency Map")],
-             gr.outputs.Image(label="Cropped Image"), allow_flagging=False, thumbnail=thumbnail, examples=examples).launch()
+io = gr.Interface(test_model, 
+  [gr.inputs.Image(label="Your Image"), gr.inputs.Checkbox(label="Show Saliency Map")],
+  gr.outputs.Image(label="Cropped Image"), 
+  allow_flagging=False, 
+  thumbnail=thumbnail, 
+  examples=examples)
+
+io.launch()
 
