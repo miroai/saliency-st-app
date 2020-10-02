@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw
 import gradio as gr
 import numpy as np
 import tensorflow as tf
+import download
 
 
 def best_window(saliency, aspect_ratio=(16,9)):
@@ -66,6 +67,8 @@ def test_model(original_arr, show_saliency):
 ### Model loading code
 graph_def = tf.GraphDef()
 model_name = "weights/model_mit1003_cpu.pb"
+
+download.download_pretrained_weights('weights/', 'model_mit1003_cpu')
 
 with tf.gfile.Open(model_name, "rb") as file:
     graph_def.ParseFromString(file.read())
