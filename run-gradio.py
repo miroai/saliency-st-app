@@ -45,8 +45,8 @@ def predict(img, show_saliency):
   tmp_result = 'results/images/{}.jpeg'.format(tmp_name)
   map_pil = Image.open(tmp_result)
   img_pil = Image.open(tmp_file)
-  os.remove(tmp_file)
-  os.remove(tmp_result)
+  # os.remove(tmp_file)
+  # os.remove(tmp_result)
   map = np.array(map_pil)
   left, right, bottom, top = best_window(map)
   out = img[bottom:top, left:right, :]
@@ -55,7 +55,28 @@ def predict(img, show_saliency):
      return bounded
   return out
 
-main('tmp/example.png')
+graph_def = tf.GraphDef()
+model_name = "weights/model_mit1003_cpu.pb"
+with tf.gfile.Open(model_name, "rb") as file:
+    graph_def.ParseFromString(file.read())
+    input_plhd = tf.placeholder(tf.float32, (None, None, None, 3))
+    [predicted_maps] = tf.import_graph_def(graph_def,
+                                           input_map={"input": input_plhd},
+                                           return_elements=["output:0"])
+
+def test_model():
+    img = np.random.random((1, 600, 800, 3))
+    
+    with tf.Session() as sess:
+        saliency = sess.run(predicted_maps,
+                            feed_dict={input_plhd: img})
+        saliency = cv2.cvtColor(saliency.squeeze(),
+                                cv2.COLOR_GRAY2BGR)
+        saliency = np.uint8(saliency * 255)
+        saliency = cv2.resize(saliency, (400, 300))
+    return saliency
+
+sal = test_model()
 
 examples=[["images/1.jpg", True],
           ["images/2.jpg", True]]
