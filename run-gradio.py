@@ -91,5 +91,5 @@ io = gr.Interface(test_model,
   thumbnail=thumbnail, 
   examples=examples)
 
-io.launch()
+io.launch(debug=True)
 
