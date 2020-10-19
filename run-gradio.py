@@ -1,67 +1,110 @@
-import os
-from main import main
-import random
-import imageio
 from PIL import Image, ImageDraw
 import gradio as gr
 import numpy as np
+import tensorflow as tf
+import download
 
 
-def best_window(saliency, aspect_ratio=(16,9)):
-  """
+def best_window(saliency, aspect_ratio=(16, 9)):
+    """
   saliency is np.array with shape (height, width)
   aspect_ratio is tuple of (width, height)
   """
-  orig_height, orig_width = saliency.shape
-  move_vertically = orig_height >= orig_width / aspect_ratio[0] * aspect_ratio[1]
-  if move_vertically:
-    saliency_per_row = np.sum(saliency, axis=1)
-    height = round(orig_width / aspect_ratio[0] * aspect_ratio[1])
-    convolved_saliency = np.convolve(saliency_per_row, np.ones(height), "valid")
-    max_row = np.argmax(convolved_saliency)
-    return 0, orig_width, max_row, max_row + height
-  else:
-    saliency_per_col = np.sum(saliency, axis=0)
-    width = round(orig_height / aspect_ratio[1] * aspect_ratio[0])
-    convolved_saliency = np.convolve(saliency_per_col, np.ones(width), "valid")
-    max_col = np.argmax(convolved_saliency)
-    return max_col, max_col + width, 0, orig_height
+    orig_height, orig_width = saliency.shape
+    move_vertically = orig_height >= orig_width / aspect_ratio[0] * \
+                      aspect_ratio[1]
+    if move_vertically:
+        saliency_per_row = np.sum(saliency, axis=1)
+        height = round(orig_width / aspect_ratio[0] * aspect_ratio[1])
+        convolved_saliency = np.convolve(saliency_per_row, np.ones(height),
+                                         "valid")
+        max_row = np.argmax(convolved_saliency)
+        return 0, orig_width, max_row, max_row + height
+    else:
+        saliency_per_col = np.sum(saliency, axis=0)
+        width = round(orig_height / aspect_ratio[1] * aspect_ratio[0])
+        convolved_saliency = np.convolve(saliency_per_col, np.ones(width),
+                                         "valid")
+        max_col = np.argmax(convolved_saliency)
+        return max_col, max_col + width, 0, orig_height
 
 
 def overlay_saliency(img, map, left, right, bottom, top):
-  background = img.convert("RGBA")
-  overlay = map.convert("RGBA")
-  overlaid = Image.blend(background, overlay, 0.75)
-  draw = ImageDraw.Draw(overlaid)
-  draw.rectangle([left, bottom, right, top], outline ="orange", width=5)
-  return overlaid
+    background = img.convert("RGBA")
+    overlay = map.convert("RGBA")
+    overlaid = Image.blend(background, overlay, 0.75)
+    draw = ImageDraw.Draw(overlaid)
+    draw.rectangle([left, bottom, right, top], outline="orange", width=5)
+    return overlaid
 
 
-def predict(img, show_saliency):
-  tmp_name = str(random.getrandbits(64))
-  tmp_file = 'tmp/{}.jpg'.format(tmp_name)
-  imageio.imwrite(tmp_file, img)
-  main(tmp_file)
-  tmp_result = 'results/images/{}.jpeg'.format(tmp_name)
-  map_pil = Image.open(tmp_result)
-  img_pil = Image.open(tmp_file)
-  os.remove(tmp_file)
-  os.remove(tmp_result)
-  map = np.array(map_pil)
-  left, right, bottom, top = best_window(map)
-  out = img[bottom:top, left:right, :]
-  if show_saliency:
-     bounded = overlay_saliency(img_pil, map_pil, left, right, bottom, top)
-     return bounded
-  return out
+def get_saliency_sum_box(crop_data, bounded, saliency):
+    left, right, bottom, top = int(crop_data["x"]), int(
+        crop_data["x"] + crop_data["width"]), int(crop_data["y"]), int(
+        crop_data["y"] + crop_data["height"])
+    sal_sum = np.sum(saliency[bottom:top, left:right])
+    total = np.sum(saliency)
+    pct_sal = round(100 * sal_sum / total, 2)
+    draw = ImageDraw.Draw(bounded)
+    draw.rectangle([left, bottom, right, top], outline="red", width=5)
+    return bounded, pct_sal
 
-main('tmp/example.png')
 
-examples=[["images/1.jpg", True],
-          ["images/2.jpg", True]]
+def test_model(original_arr):
+    original_arr, crop_data = original_arr
+    crop_data["original_height"] = original_arr.shape[0]
+    crop_data["original_width"] = original_arr.shape[1]
+    original_img = Image.fromarray(original_arr).convert('RGB')
+    w, h = original_img.size
+    h_ = int(400 / w * h)
+    resized_img = original_img.resize((400, h_))
+    resized_arr = np.asarray(resized_img)
+
+    resized_arr = resized_arr[np.newaxis, ...]
+    saliency_arr = sess.run(predicted_maps,
+                            feed_dict={input_plhd: resized_arr})
+    saliency_arr = saliency_arr.squeeze()
+
+    saliency_img = Image.fromarray(np.uint8(saliency_arr * 255), 'L')
+    saliency_resized_img = saliency_img.resize((w, h))
+    saliency_resized_arr = np.asarray(saliency_resized_img)
+    saliency_zero_one = np.divide(saliency_resized_arr, 255.0)
+    left, right, bottom, top = best_window(saliency_resized_arr)
+    output = original_arr[bottom:top, left:right, :]
+
+    bounded = overlay_saliency(original_img, saliency_resized_img,
+                               left, right, bottom, top)
+    with_sal_box, pct_sal = get_saliency_sum_box(crop_data, bounded,
+                                                 saliency_zero_one)
+    sal_sum = str(pct_sal) + "%"
+    return with_sal_box, sal_sum
+
+
+### Model loading code
+graph_def = tf.GraphDef()
+model_name = "weights/model_mit1003_cpu.pb"
+
+download.download_pretrained_weights('weights/', 'model_mit1003_cpu')
+
+with tf.gfile.Open(model_name, "rb") as file:
+    graph_def.ParseFromString(file.read())
+    input_plhd = tf.placeholder(tf.float32, (None, None, None, 3))
+    [predicted_maps] = tf.import_graph_def(graph_def,
+                                           input_map={"input": input_plhd},
+                                           return_elements=["output:0"])
+
+sess = tf.Session()
+
+examples = [["images/1.jpg", True],
+            ["images/2.jpg", True]]
 
 thumbnail = "https://ibb.co/hXdbDyD"
-gr.Interface(predict, [gr.inputs.Image(label="Your Image"),
-                       gr.inputs.Checkbox(label="Show Saliency Map")],
-             gr.outputs.Image(label="Cropped Image"), allow_flagging=False, thumbnail=thumbnail, examples=examples).launch()
+io = gr.Interface(test_model,
+                  gr.inputs.Image(label="Your Image", tool='select'),
+                  [gr.outputs.Image(label="Cropped Image"),
+                   gr.outputs.Label(label="Percent of Saliency in Red Box")],
+                  allow_flagging=False,
+                  thumbnail=thumbnail,
+                  examples=examples)
 
+io.launch()

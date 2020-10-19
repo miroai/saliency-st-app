@@ -5,6 +5,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="gradio_static" />
+    <orderEntry type="module" module-name="load-test" />
   </component>
   <component name="TestRunnerService">
     <option name="projectConfiguration" value="pytest" />
