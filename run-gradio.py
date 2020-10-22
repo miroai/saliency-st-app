@@ -105,6 +105,6 @@ io = gr.Interface(test_model,
                    gr.outputs.Label(label="Percent of Saliency in Red Box")],
                   allow_flagging=False,
                   thumbnail=thumbnail,
-                  examples=examples)
+                  examples=examples, analytics_enabled=False)
 
 io.launch()
