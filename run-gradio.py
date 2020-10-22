@@ -107,4 +107,4 @@ io = gr.Interface(test_model,
                   thumbnail=thumbnail,
                   examples=examples, analytics_enabled=False)
 
-io.launch()
+io.launch(debug=True)
