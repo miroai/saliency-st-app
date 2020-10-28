@@ -89,7 +89,7 @@ io = gr.Interface(test_model,
   gr.outputs.Image(label="Cropped Image"), 
   allow_flagging=False, 
   thumbnail=thumbnail, 
-  examples=examples)
+  examples=examples, analytics_enabled=False)
 
 io.launch(debug=True)
 
