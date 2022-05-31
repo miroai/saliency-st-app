@@ -1,3 +1,6 @@
+# Hugging Face Space doesn't like binary files
+*.jpg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 data/
