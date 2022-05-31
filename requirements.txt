@@ -1,4 +1,6 @@
 tensorflow==1.13.1
+protobuf==3.19.0
 matplotlib==3.0.3
 requests==2.21.0
 scipy==1.4.1
+streamlit==0.89.0
