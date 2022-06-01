@@ -6,7 +6,7 @@ import download, os, sys
 
 
 def best_window(saliency, aspect_ratio=(16, 9)):
-    """
+    """ returns left, right, bottom, top
   saliency is np.array with shape (height, width)
   aspect_ratio is tuple of (width, height)
   """
@@ -53,7 +53,7 @@ def get_saliency_sum_box(crop_data, bounded, saliency):
     return bounded, pct_sal
 
 
-def test_model(im_arr, model_dict):
+def test_model(im_arr, model_dict, aspect_ratio_tup = None):
     # original_arr, crop_data = original_arr
     # crop_data["original_height"] = original_arr.shape[0]
     # crop_data["original_width"] = original_arr.shape[1]
@@ -75,12 +75,15 @@ def test_model(im_arr, model_dict):
 
     saliency_resized_arr = np.asarray(saliency_resized_img)
     saliency_zero_one = np.divide(saliency_resized_arr, 255.0)
-    # left, right, bottom, top = best_window(saliency_resized_arr)
+
+    bbox = None
+    if aspect_ratio_tup:
+        left, right, bottom, top = best_window(saliency_resized_arr,
+                                    aspect_ratio=aspect_ratio_tup)
+        bbox = {'left': left, 'right': right, 'bottom': bottom, 'top':top}
     # output = original_arr[bottom:top, left:right, :]
 
-    # bounded = overlay_saliency(original_img, saliency_resized_img,
-                               # left, right, bottom, top)
-    bounded = overlay_saliency(original_img, saliency_resized_img)
+    bounded = overlay_saliency(original_img, saliency_resized_img, bbox=bbox)
     return bounded
     # with_sal_box, pct_sal = get_saliency_sum_box(crop_data, bounded,
     #                                              saliency_zero_one)
