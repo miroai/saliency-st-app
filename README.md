@@ -1,3 +1,13 @@
+---
+title: Vox_saliency_demo
+emoji: 🐢
+colorFrom: pink
+colorTo: gray
+sdk: streamlit
+sdk_version: 1.9.0
+app_file: app.py
+pinned: false
+---
 # Saliency Based Image Cropping
 
 This repo was forked by the [Miro team](https://miro.io/#) to create the interface [here]()
