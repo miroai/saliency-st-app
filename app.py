@@ -75,11 +75,20 @@ def Main(model_dict):
 	st.set_page_config(layout = 'wide')
 	show_miro_logo()
 	with st.sidebar.expander('Saliency Demo'):
-		st.info('todo: add details about the app')
+		st.info(f'''
+		[TensorFlow Implementation of MSI-Net](https://github.com/alexanderkroner/saliency)
+		which archived
+		[SoTA performance](https://saliency.tuebingen.ai/results.html) on the
+		[MIT Saliency Benchmark dataset](http://saliency.mit.edu/datasets.html)
+		''')
 
 	im = get_image(st_asset = st.sidebar.expander('Input Image', expanded = True), extension_list = ['jpg','jpeg'])
+	aspect_ratio = st.sidebar.selectbox('aspect ratio', help = 'to demo saliency cropping',
+					options = ['','16x9','4x3'])
 	if im:
-		saliency_im = test_model(np.array(im), model_dict = model_dict)
+		aspect_ratio_tup = tuple([int(i) for i in aspect_ratio.split('x')]) if aspect_ratio else None
+		saliency_im = test_model(np.array(im), model_dict = model_dict,
+						aspect_ratio_tup = aspect_ratio_tup)
 
 		l_col, r_col = st.columns(2)
 		l_col.image(im, caption = 'Input Image')
