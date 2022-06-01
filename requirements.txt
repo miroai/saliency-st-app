@@ -4,4 +4,7 @@ matplotlib==3.0.3
 requests==2.21.0
 scipy==1.4.1
 streamlit==0.89.0
+<<<<<<< HEAD
 gdown==4.4.0
+=======
+>>>>>>> db08c1321b1981c0f4ffa3423e0bcbe340a4ce08
